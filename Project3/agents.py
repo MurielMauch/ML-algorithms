@@ -91,13 +91,12 @@ class ReflexAgent(Agent):
 The functions available from now on are the ones used to implement the Q-Values Reinforcement Agent
 """
 
-
 class ReinforcementAgent(Agent):
     """
     The Reinforcement Agent estimates Q-Values (as well as policies) from experience
     """
 
-    def __init__(self, actions_available=None, num_training=100, epsilon=0.5, alpha=0.5, gamma=1):
+    def __init__(self, actions_available=None, num_training=10, epsilon=0.5, alpha=0.5, gamma=1):
         """
         Instantiates the Reinforcement Agent
         
@@ -110,14 +109,17 @@ class ReinforcementAgent(Agent):
         """
         if actions_available is None:
             actions_available = lambda state: state.getLegalActions()
+
         self.actions_available = actions_available
         self.episodes_so_far = 0
+
+        self.number_of_actions_taken = 0
         self.accum_train_rewards = 0.0
         self.accum_test_rewards = 0.0
         self.num_training = int(num_training)
-        self.epsilon = float(epsilon)
-        self.alpha = float(alpha)
-        self.discount = float(gamma)
+        self.epsilon = float(epsilon)  # exploration rate
+        self.alpha = float(alpha)  # learning rate
+        self.discount = float(gamma)  # discount factor
         self.last_state = None
         self.last_action = None
         self.episode_rewards = 0.0
@@ -150,11 +152,17 @@ class ReinforcementAgent(Agent):
         self.last_state = None
         self.last_action = None
         self.episode_rewards = 0.0
+        self.number_of_actions_taken = 0
 
     def stopEpisode(self):
         """
           Called by environment when episode is done
         """
+        print("Ending episode: {}".format(self.episodes_so_far))
+        print('Episode rewards: {}'.format(self.episode_rewards))
+        message = 'Number of actions taken: {}'.format(self.number_of_actions_taken)
+        print(message)
+
         if self.episodes_so_far < self.num_training:
             self.accum_train_rewards += self.episode_rewards
         else:
@@ -164,6 +172,8 @@ class ReinforcementAgent(Agent):
             # Take off the training wheels
             self.epsilon = 0.0  # no exploration
             self.alpha = 0.0  # no learning
+
+        print("-" * len(message))
 
     def isInTraining(self):
         return self.episodes_so_far < self.num_training
@@ -185,6 +195,7 @@ class ReinforcementAgent(Agent):
             Called by inherited class when
             an action is taken in a state
         """
+        self.number_of_actions_taken += 1
         self.last_state = state
         self.last_action = action
 
@@ -203,7 +214,9 @@ class ReinforcementAgent(Agent):
     def registerInitialState(self, state):
         self.startEpisode()
         if self.episodes_so_far == 0:
-            print("Beginning {} episodes of Training".format(self.num_training))
+            message = "Beginning {} episodes of Training".format(self.num_training)
+            print(message)
+            print('-' * len(message))
 
     def final(self, state):
         """
@@ -214,7 +227,7 @@ class ReinforcementAgent(Agent):
         self.stopEpisode()
 
         if not 'episodeStartTime' in self.__dict__:
-            self.episodeStartTime = time.time()
+            self.episode_start_time = time.time()
         if not 'lastWindowAccumRewards' in self.__dict__:
             self.last_window_accum_rewards = 0.0
         self.last_window_accum_rewards += state.getScore()
@@ -232,9 +245,9 @@ class ReinforcementAgent(Agent):
                 print("\nCompleted {} test episodes".format(self.episodes_so_far - self.num_training))
                 print("\nAverage Rewards over testing: {}".format(test_avg))
             print("\nAverage Rewards for last {} episodes: {}".format(num_eps_update, window_avg))
-            print("\nEpisode took {} seconds".format(time.time() - self.episodeStartTime))
+            print("\nEpisode took {} seconds".format(time.time() - self.episode_start_time))
             self.last_window_accum_rewards = 0.0
-            self.episodeStartTime = time.time()
+            self.episode_start_time = time.time()
 
         if self.episodes_so_far == self.num_training:
             msg = 'Training Done (turning off epsilon and alpha)'
@@ -365,7 +378,6 @@ class ApproximateQAgent(QLearningAgent):
         """
            Should update your weights based on transition
         """
-        "*** YOUR CODE HERE ***"
         features = self.featExtractor.getFeatures(state, action)
         possible_state_q_values = []
         for act in self.getLegalActions(state):
@@ -376,12 +388,7 @@ class ApproximateQAgent(QLearningAgent):
                 sum(possible_state_q_values))) - self.getQValue(state, action)) * features[key]
 
     def final(self, state):
-        "Called at the end of each game."
-        # call the super-class final method
+        # called to end the game
         QLearningAgent.final(self, state)
 
-        # did we finish training?
-        if self.episodes_so_far == self.num_training:
-            # you might want to print your weights here for debugging
-            "*** YOUR CODE HERE ***"
-            pass
+

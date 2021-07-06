@@ -6,30 +6,6 @@ In this file, we implement the class feature extractor, which retrieves
 the information for all pacman game states
 """
 
-
-def closest_food(pos, food, walls):
-    """
-    closestFood -- this is similar to the function that we have
-    worked on in the search project; here its all in one place
-    """
-    fringe = [(pos[0], pos[1], 0)]
-    expanded = set()
-    while fringe:
-        pos_x, pos_y, dist = fringe.pop(0)
-        if (pos_x, pos_y) in expanded:
-            continue
-        expanded.add((pos_x, pos_y))
-        # if we find a food at this location then exit
-        if food[pos_x][pos_y]:
-            return dist
-        # otherwise spread out from the location to its neighbours
-        nbrs = Actions.getLegalNeighbors((pos_x, pos_y), walls)
-        for nbr_x, nbr_y in nbrs:
-            fringe.append((nbr_x, nbr_y, dist + 1))
-    # no food found
-    return None
-
-
 class SimpleExtractor():
     """
     Returns simple features for a basic reflex Pacman:
@@ -39,40 +15,43 @@ class SimpleExtractor():
     - whether a ghost is one step away
     """
 
+    def closest_food(self, pos, food, walls):
+        fringe = [(pos[0], pos[1], 0)]
+        expanded = set()
+        while fringe:
+            pos_x, pos_y, dist = fringe.pop(0)
+            if (pos_x, pos_y) in expanded:
+                continue
+            expanded.add((pos_x, pos_y))
+            # if we find a food at this location then exit
+            if food[pos_x][pos_y]:
+                return dist
+            # otherwise spread out from the location to its neighbours
+            nbrs = Actions.getLegalNeighbors((pos_x, pos_y), walls)
+            for nbr_x, nbr_y in nbrs:
+                fringe.append((nbr_x, nbr_y, dist + 1))
+        # no food found
+        return None
+
+    def getManhattanDistances(self, pos, ghosts):
+        return map(lambda g: util.manhattanDistance(pos, g.getPosition()), ghosts)
+
     def getFeatures(self, state, action):
         # extract the grid of food and wall locations and get the ghost locations
         food = state.getFood()
         walls = state.getWalls()
         ghosts = state.getGhostPositions()
-        capsulesLeft = len(state.getCapsules())
-        scaredGhost = []
-        activeGhost = []
+        capsules_left = len(state.getCapsules())
+        scared_ghost = []
+        active_ghost = []
         features = util.Counter()
         for ghost in state.getGhostStates():
             if not ghost.scaredTimer:
-                activeGhost.append(ghost)
+                active_ghost.append(ghost)
             else:
-                # print (ghost.scaredTimer)
-                scaredGhost.append(ghost)
+                scared_ghost.append(ghost)
 
         pos = state.getPacmanPosition()
-
-        def getManhattanDistances(ghosts):
-            return map(lambda g: util.manhattanDistance(pos, g.getPosition()), ghosts)
-
-        distanceToClosestActiveGhost = distanceToClosestScaredGhost = 0
-        '''
-        if activeGhost:
-            distanceToClosestActiveGhost = min(getManhattanDistances(activeGhost))
-        else: 
-            distanceToClosestActiveGhost = float("inf")
-        distanceToClosestActiveGhost = max(distanceToClosestActiveGhost, 5)
-        '''
-
-        '''else:
-            distanceToClosestScaredGhost = 0 # I don't want it to count if there aren't any scared ghosts
-            features["dist-to-closest-scared-ghost"] = -2*distanceToClosestScaredGhost
-        '''
 
         features["bias"] = 1.0
 
@@ -89,20 +68,20 @@ class SimpleExtractor():
         if not features["#-of-ghosts-1-step-away"] and food[next_x][next_y]:
             features["eats-food"] = 1.0
 
-        dist = closest_food((next_x, next_y), food, walls)
+        dist = self.closest_food((next_x, next_y), food, walls)
         if dist is not None:
             # make the distance a number less than one otherwise the update
             # will diverge wildly
             features["closest-food"] = float(dist) / (walls.width * walls.height)
-        if scaredGhost:  # and not activeGhost:
-            distanceToClosestScaredGhost = min(getManhattanDistances(scaredGhost))
-            if activeGhost:
-                distanceToClosestActiveGhost = min(getManhattanDistances(activeGhost))
+        if scared_ghost:  # and not active_ghost:
+            distance_to_closest_scared_ghost = min(self.getManhattanDistances(pos, scared_ghost))
+            if active_ghost:
+                distance_to_closest_active_ghost = min(self.getManhattanDistances(pos, active_ghost))
             else:
-                distanceToClosestActiveGhost = 10
-            features["capsules"] = capsulesLeft
+                distance_to_closest_active_ghost = 10
+            features["capsules"] = capsules_left
             # features["dist-to-closest-active-ghost"] = 2*(1./distanceToClosestActiveGhost)
-            if distanceToClosestScaredGhost <= 8 and distanceToClosestActiveGhost >= 2:  # features["#-of-ghosts-1-step-away"] >= 1:
+            if distance_to_closest_scared_ghost <= 8 and distance_to_closest_active_ghost >= 2:  # features["#-of-ghosts-1-step-away"] >= 1:
                 features["#-of-ghosts-1-step-away"] = 0
                 features["eats-food"] = 0.0
             # features["closest-food"] = 0
