@@ -498,7 +498,7 @@ def readCommand( argv ):
                     help='A recorded game file (pickle) to replay', default=None)
   parser.add_option('-a','--agentArgs',dest='agentArgs',
                     help='Comma separated values sent to agent. e.g. "opt1=val1,opt2,opt3=val3"')
-  parser.add_option('-x', '--numTraining', dest='numTraining', type='int',
+  parser.add_option('-x', '--num_training', dest='num_training', type='int',
                     help=default('How many episodes are training (suppresses output)'), default=0)
   parser.add_option('--frameTime', dest='frameTime', type='float',
                     help=default('Time to delay between frames; <0 means keyboard'), default=0.1)
@@ -523,9 +523,9 @@ def readCommand( argv ):
   noKeyboard = options.gameToReplay == None and (options.textGraphics or options.quietGraphics)
   pacmanType = loadAgent(options.pacman, noKeyboard)
   agentOpts = parseAgentArgs(options.agentArgs)
-  if options.numTraining > 0:
-    args['numTraining'] = options.numTraining
-    if 'numTraining' not in agentOpts: agentOpts['numTraining'] = options.numTraining
+  if options.num_training > 0:
+    args['num_training'] = options.num_training
+    if 'num_training' not in agentOpts: agentOpts['num_training'] = options.num_training
   pacman = pacmanType(**agentOpts) # Instantiate Pacman with agentArgs
   args['pacman'] = pacman
 
@@ -608,7 +608,7 @@ def replayGame( layout, actions, display ):
 
     display.finish()
 
-def runGames( layout, pacman, ghosts, display, numGames, record, numTraining = 0, catchExceptions=False, timeout=30 ):
+def runGames( layout, pacman, ghosts, display, numGames, record, num_training = 0, catchExceptions=False, timeout=30 ):
   import __main__
   __main__.__dict__['_display'] = display
 
@@ -616,7 +616,7 @@ def runGames( layout, pacman, ghosts, display, numGames, record, numTraining = 0
   games = []
 
   for i in range( numGames ):
-    beQuiet = i < numTraining
+    beQuiet = i < num_training
     if beQuiet:
         # Suppress output and graphics
         import textDisplay
@@ -637,7 +637,7 @@ def runGames( layout, pacman, ghosts, display, numGames, record, numTraining = 0
       cPickle.dump(components, f)
       f.close()
 
-  if (numGames-numTraining) > 0:
+  if (numGames-num_training) > 0:
     scores = [game.state.getScore() for game in games]
     wins = [game.state.isWin() for game in games]
     winRate = wins.count(True)/ float(len(wins))
