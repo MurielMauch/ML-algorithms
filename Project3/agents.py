@@ -3,7 +3,7 @@ import random
 import time
 
 import util
-from featureExtractors import *
+from featureExtractors import FeatureExtractor
 from game import Agent, Directions, Actions
 
 """
@@ -43,9 +43,9 @@ class ReinforcementAgent(Agent):
         self.last_state = None
         self.last_action = None
 
-        self.accum_train_rewards = 0.0
-        self.accum_test_rewards = 0.0
-        self.episode_rewards = 0.0
+        self.accum_train_score = 0.0
+        self.accum_test_score = 0.0
+        self.episode_score = 0.0
 
     def update(self, state, action, next_state, reward):
         pass  # not implemented here
@@ -59,26 +59,26 @@ class ReinforcementAgent(Agent):
             Called to inform the agent that a transition has been observed.
             We will call self.update with the same arguments
         """
-        self.episode_rewards += delta_reward
+        self.episode_score += delta_reward
         self.update(state, action, next_state, delta_reward)
 
     def startEpisode(self):
         self.last_state = None
         self.last_action = None
-        self.episode_rewards = 0.0
+        self.episode_score = 0.0
         self.number_of_actions_taken = 0
 
     def stopEpisode(self):
         print("Ending episode: {}".format(self.episodes_so_far + 1))
-        print('Episode rewards: {}'.format(self.episode_rewards))
+        print('Score: {}'.format(self.episode_score))
         message = 'Number of actions taken: {}'.format(self.number_of_actions_taken)
         print(message)
         print("-" * len(message))
 
         if self.episodes_so_far < self.num_training:
-            self.accum_train_rewards += self.episode_rewards
+            self.accum_train_score += self.episode_score
         else:
-            self.accum_test_rewards += self.episode_rewards
+            self.accum_test_score += self.episode_score
         self.episodes_so_far += 1
         if self.episodes_so_far >= self.num_training:
             # now we remove the parameters
@@ -200,7 +200,7 @@ class ApproximateQAgent(QLearningAgent):
     """
 
     def __init__(self, extractor='FeatureExtractor', epsilon=0.05, gamma=0.8, alpha=0.2, num_training=0, **args):
-        self.featExtractor = util.lookup(extractor, globals())()
+        self.featExtractor = FeatureExtractor()
 
         args['epsilon'] = epsilon
         args['gamma'] = gamma
@@ -230,6 +230,8 @@ class ApproximateQAgent(QLearningAgent):
 
     def update(self, state, action, next_state, reward):
         # Should update your weights based on transition
+        # we get the features based on the current state and action, ignoring the past
+        # this allows us to have a huge performance advantage
         features = self.featExtractor.getFeatures(state, action)
         possible_state_q_values = []
 
