@@ -3,6 +3,7 @@ import random
 import time
 
 import util
+import utils
 from featureExtractors import FeatureExtractor
 from game import Agent, Directions, Actions
 
@@ -69,11 +70,14 @@ class ReinforcementAgent(Agent):
         self.number_of_actions_taken = 0
 
     def stopEpisode(self):
-        print("Ending episode: {}".format(self.episodes_so_far + 1))
-        print('Score: {}'.format(self.episode_score))
-        message = 'Number of actions taken: {}'.format(self.number_of_actions_taken)
-        print(message)
-        print("-" * len(message))
+        if self.episodes_so_far > self.num_training:
+            print("Ending episode: {}".format(self.episodes_so_far + 1))
+            print('Score: {}'.format(self.episode_score))
+            message = 'Number of actions taken: {}'.format(self.number_of_actions_taken)
+            print(message)
+            print("-" * len(message))
+
+        utils.set_globals(self.episodes_so_far, self.number_of_actions_taken, self.episode_score)
 
         if self.episodes_so_far < self.num_training:
             self.accum_train_score += self.episode_score

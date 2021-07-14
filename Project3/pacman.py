@@ -39,6 +39,9 @@ from game import Directions
 from game import Actions
 from util import nearestPoint
 from util import manhattanDistance
+
+import utils
+
 import util, layout
 import sys, types, time, random, os
 
@@ -645,6 +648,9 @@ def runGames( layout, pacman, ghosts, display, numGames, record, num_training = 
     print 'Scores:       ', ', '.join([str(score) for score in scores])
     print 'Win Rate:      %d/%d (%.2f)' % (wins.count(True), len(wins), winRate)
     print 'Record:       ', ', '.join([ ['Loss', 'Win'][int(w)] for w in wins])
+
+    utils.plot_rewards()
+    utils.plot_actions()
 
   return games
 
