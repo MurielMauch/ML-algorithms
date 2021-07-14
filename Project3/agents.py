@@ -70,12 +70,11 @@ class ReinforcementAgent(Agent):
         self.number_of_actions_taken = 0
 
     def stopEpisode(self):
-        if self.episodes_so_far > self.num_training:
-            print("Ending episode: {}".format(self.episodes_so_far + 1))
-            print('Score: {}'.format(self.episode_score))
-            message = 'Number of actions taken: {}'.format(self.number_of_actions_taken)
-            print(message)
-            print("-" * len(message))
+        print("Ending episode: {}".format(self.episodes_so_far + 1))
+        print('Score: {}'.format(self.episode_score))
+        message = 'Number of actions taken: {}'.format(self.number_of_actions_taken)
+        print(message)
+        print("-" * len(message))
 
         utils.set_globals(self.episodes_so_far, self.number_of_actions_taken, self.episode_score)
 
